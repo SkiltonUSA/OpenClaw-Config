@@ -26,3 +26,4 @@
   - Context budget is dominated by system prompt + tool schemas + injected files + history/tool results; `/context list` and `/context detail` are the primary diagnostics.
   - Workspace is memory/home but not a hard boundary; true isolation is enforced by sandboxing/tool policy, not cwd defaults.
   - Presence is a best-effort in-memory view of gateway + connected clients/nodes; stable `instanceId` is required to avoid duplicate presence rows.
+  - User rule: before modifying `~/.openclaw/openclaw.json`, always create a backup first using suffix convention `openclaw.json-bak-<name><DDMMYYYY>` (example: `openclaw.json-bak-hal03082026`, using DSK-style date convention).
