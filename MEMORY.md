@@ -5,6 +5,8 @@
 - Reviewed OpenClaw docs for:
   - Multi-Agent Routing (`/concepts/multi-agent`)
   - Gateway Architecture (`/concepts/architecture`)
+  - Agent Runtime (`/concepts/agent`)
+  - Agent Loop (`/concepts/agent-loop`)
 - Key understanding captured:
   - Multi-agent isolation depends on separate workspace + `agentDir` + session store per `agentId`.
   - Routing is deterministic and “most-specific wins” (peer > parentPeer > roles/guild/team > account > channel > default).
@@ -13,3 +15,10 @@
   - Gateway is the central long-lived daemon and WS control plane; first frame must be `connect`.
   - Idempotency keys are required for side-effecting methods like `send`/`agent` for safe retries.
   - Events are not replayed; clients must refresh on gaps.
+  - Agent runtime injects bootstrap files (`AGENTS.md`, `SOUL.md`, `TOOLS.md`, `BOOTSTRAP.md`, `IDENTITY.md`, `USER.md`) on first turn, with truncation/missing-file markers.
+  - Core tools are policy-controlled; `TOOLS.md` is guidance only (not tool enablement).
+  - Skills resolve from bundled + `~/.openclaw/skills` + `<workspace>/skills` (workspace wins on name conflicts).
+  - Agent loop is serialized per session lane; queue modes (`steer`/`followup`/`collect`) control interruption behavior.
+  - Stream model: `assistant`, `tool`, `lifecycle`; `agent.wait` waits for lifecycle end/error only.
+  - `NO_REPLY` is treated as a silent token; duplicate messaging confirmations are suppressed.
+  - Runtime timeout and wait timeout are distinct (`agent.wait` timeout does not stop the running agent).
