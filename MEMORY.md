@@ -22,3 +22,7 @@
   - Stream model: `assistant`, `tool`, `lifecycle`; `agent.wait` waits for lifecycle end/error only.
   - `NO_REPLY` is treated as a silent token; duplicate messaging confirmations are suppressed.
   - Runtime timeout and wait timeout are distinct (`agent.wait` timeout does not stop the running agent).
+  - System prompt is OpenClaw-owned per run, supports `full|minimal|none` prompt modes, and injects bootstrap/workspace context with configurable truncation caps.
+  - Context budget is dominated by system prompt + tool schemas + injected files + history/tool results; `/context list` and `/context detail` are the primary diagnostics.
+  - Workspace is memory/home but not a hard boundary; true isolation is enforced by sandboxing/tool policy, not cwd defaults.
+  - Presence is a best-effort in-memory view of gateway + connected clients/nodes; stable `instanceId` is required to avoid duplicate presence rows.
