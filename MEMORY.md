@@ -27,3 +27,16 @@
   - Workspace is memory/home but not a hard boundary; true isolation is enforced by sandboxing/tool policy, not cwd defaults.
   - Presence is a best-effort in-memory view of gateway + connected clients/nodes; stable `instanceId` is required to avoid duplicate presence rows.
   - User rule: before modifying `~/.openclaw/openclaw.json`, always create a backup first using suffix convention `openclaw.json-bak-<name><DDMMYYYY>` (example: `openclaw.json-bak-hal03082026`, using DSK-style date convention).
+
+## 2026-03-09
+
+- User completed OpenClaw npm upgrade and restart; instructed me to run post-upgrade check with `openclaw doctor --non-interactive`.
+- Diagnosed post-upgrade token mismatch: gateway service had embedded stale `OPENCLAW_GATEWAY_TOKEN` after onboarding/restart, causing CLI unauthorized probe failures.
+- Confirmed model split requirement and current config:
+  - default model remains OpenAI Codex (`openai-codex/gpt-5.3-codex`)
+  - `mathew` agent uses Anthropic (moved from `claude-sonnet-4-5` to `claude-sonnet-4-6` during troubleshooting).
+- Ran repeated live tests against `mathew` (`2+2`) while user watched logs:
+  - initial failures: Anthropic billing/credit error
+  - intermediate failures: invalid authentication credentials / invalid `x-api-key`
+  - after user fixed key/account issue, test succeeded and returned `4` on Anthropic Sonnet 4.6.
+- Important safety note reinforced: API keys were pasted in chat during setup; treat as exposed and rotate after successful configuration.
