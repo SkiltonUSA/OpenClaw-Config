@@ -50,3 +50,8 @@ Current preferred name token: `hal`
 Current date format token: `DDMMYYYY`
 
 Add whatever helps you do your job. This is your cheat sheet.
+
+## ByteRover (Memory)
+- Query: `brv query "auth patterns"`
+- Curate: `brv curate "Auth uses JWT cookies + refresh rotation"`
+- Sync (optional): `brv pull` / `brv push`
