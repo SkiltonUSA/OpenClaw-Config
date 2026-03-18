@@ -56,9 +56,28 @@ Use a stable slug such as:
 }
 ```
 
-## Build/rebuild index
+## Ingest a PDF (operator command)
 
 From workspace root:
+
+```bash
+python3 pdf-pipeline/scripts/ingest_pdf.py \
+  --input "/path/to/input.pdf" \
+  --title "My Report Title" \
+  --uploaded-by "discord:dom_ds" \
+  --source-channel "1483854530042134658" \
+  --tags "research,policy"
+```
+
+This command:
+
+- creates/updates `storage/docs/<doc-id>/`
+- copies input to `original.pdf`
+- writes/updates `manifest.json`
+- attempts parser extraction via `opendataloader-pdf` if installed
+- regenerates `storage/index.html`
+
+## Build/rebuild index only
 
 ```bash
 python3 pdf-pipeline/scripts/rebuild_index.py
