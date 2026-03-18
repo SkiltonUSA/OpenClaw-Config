@@ -1,0 +1,3 @@
+config-backups/
+*.env
+pdf-pipeline/.discord-intake.env
