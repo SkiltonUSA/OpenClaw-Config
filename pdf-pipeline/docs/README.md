@@ -122,6 +122,14 @@ Outputs:
 - processed PDFs moved to `pdf-pipeline/processed/`
 - Discord-ready post templates in `pdf-pipeline/outbox/<doc-id>.txt`
 
+## Discord intake automation
+
+- Upload PDFs in the configured intake channel.
+- `discord_intake_poller.py` downloads attachments to `incoming/`.
+- `process_incoming.py` ingests + indexes + writes outbox post templates.
+
+See `docs/DISCORD_INTAKE.md`.
+
 ## Discord posting convention
 
 In your PDF intake channel, post:
