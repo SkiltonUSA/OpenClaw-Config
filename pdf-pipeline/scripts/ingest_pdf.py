@@ -51,24 +51,27 @@ def parse_with_opendataloader(input_pdf: Path, output_dir: Path) -> dict:
         "notes": "CLI not found",
     }
 
-    which = run(["bash", "-lc", "command -v opendataloader-pdf || true"])
-    cli = which.stdout.strip()
-    if not cli:
-        return parser_meta
+    local_cli = ROOT / ".venv" / "bin" / "opendataloader-pdf"
+    if local_cli.exists():
+        cli_cmd = [str(local_cli)]
+    else:
+        which = run(["bash", "-lc", "command -v opendataloader-pdf || true"])
+        cli = which.stdout.strip()
+        if not cli:
+            return parser_meta
+        cli_cmd = [cli]
 
     parser_meta["status"] = "attempted"
-    version = run(["bash", "-lc", "opendataloader-pdf --version || true"]).stdout.strip()
+    version = run(cli_cmd + ["--version"]).stdout.strip()
     if version:
         parser_meta["version"] = version
 
     # Output directly inside doc folder.
-    # Tool typically emits parsed.md/json next to outputs according to defaults/options.
-    cmd = [
-        "opendataloader-pdf",
+    cmd = cli_cmd + [
         str(input_pdf),
-        "--output-dir",
+        "-o",
         str(output_dir),
-        "--format",
+        "-f",
         "markdown,json",
     ]
     proc = run(cmd)
@@ -125,6 +128,15 @@ def main() -> int:
 
     parser_meta = parse_with_opendataloader(dst_pdf, doc_dir)
 
+    # Normalize opendataloader outputs to parsed.md / parsed.json when available.
+    generated_md = doc_dir / "original.md"
+    generated_json = doc_dir / "original.json"
+    if parser_meta.get("status") == "ok":
+        if generated_md.exists():
+            parsed_md.write_text(generated_md.read_text(encoding="utf-8"), encoding="utf-8")
+        if generated_json.exists():
+            parsed_json.write_text(generated_json.read_text(encoding="utf-8"), encoding="utf-8")
+
     tags = [t.strip() for t in args.tags.split(",") if t.strip()]
     manifest = {
         "docId": doc_id,
@@ -141,6 +153,12 @@ def main() -> int:
         },
         "parser": parser_meta,
     }
+
+    # If parsing completed successfully, remove original PDF from server storage.
+    if parser_meta.get("status") == "ok" and dst_pdf.exists():
+        dst_pdf.unlink(missing_ok=True)
+        manifest["files"]["original"] = None
+        manifest["retention"] = {"originalDeleted": True, "deletedAt": utc_now_iso()}
 
     (doc_dir / "manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
 

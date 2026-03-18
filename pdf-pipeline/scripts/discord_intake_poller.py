@@ -18,6 +18,7 @@ INCOMING = Path("/home/ubuntu/.openclaw/workspace/pdf-pipeline/incoming")
 TOKEN = os.getenv("DISCORD_BOT_TOKEN", "").strip()
 CHANNEL_ID = os.getenv("INTAKE_CHANNEL_ID", "").strip()
 POLL_SECONDS = int(os.getenv("INTAKE_POLL_SECONDS", "20"))
+DELETE_SOURCE_MESSAGE = os.getenv("DELETE_SOURCE_MESSAGE", "false").lower() in {"1", "true", "yes", "on"}
 
 API_BASE = "https://discord.com/api/v10"
 
@@ -32,6 +33,22 @@ def api_get(path: str):
     )
     with urlopen(req, timeout=30) as r:
         return json.loads(r.read().decode("utf-8"))
+
+
+def api_delete(path: str) -> bool:
+    req = Request(
+        API_BASE + path,
+        method="DELETE",
+        headers={
+            "Authorization": f"Bot {TOKEN}",
+            "User-Agent": "openclaw-pdf-intake/1.0",
+        },
+    )
+    try:
+        with urlopen(req, timeout=30):
+            return True
+    except Exception:
+        return False
 
 
 def download(url: str, dst: Path):
@@ -75,6 +92,7 @@ def run_once():
     for m in msgs_sorted:
         mid = m.get("id")
         attachments = m.get("attachments", []) or []
+        downloaded_any = False
         for a in attachments:
             fn = a.get("filename", "")
             url = a.get("url", "")
@@ -91,6 +109,11 @@ def run_once():
             download(url, out_path)
             print(f"Downloaded PDF -> {out_path}")
             seen.add(key)
+            downloaded_any = True
+
+        if downloaded_any and DELETE_SOURCE_MESSAGE and mid:
+            ok = api_delete(f"/channels/{CHANNEL_ID}/messages/{mid}")
+            print(f"Delete source message {mid}: {'ok' if ok else 'failed'}")
 
         if mid:
             st["last_message_id"] = mid

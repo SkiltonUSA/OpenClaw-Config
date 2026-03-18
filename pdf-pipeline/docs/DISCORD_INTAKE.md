@@ -34,6 +34,14 @@ systemctl --user restart pdf-intake-poller.service
 journalctl --user -u pdf-intake-poller.service -n 100 --no-pager
 ```
 
+## Retention policy
+
+- On successful ingest, source PDF in `incoming/` is deleted.
+- On successful parse, `original.pdf` in document storage is deleted (parsed artifacts retained).
+- Intake poller can delete the original Discord message after attachment download when:
+  - `DELETE_SOURCE_MESSAGE=true` in `.discord-intake.env`
+  - bot has message delete permissions in the intake channel
+
 ## Important
 
 - If channel creation is blocked by Discord permissions, create the intake channel manually in Discord and provide its channel ID.

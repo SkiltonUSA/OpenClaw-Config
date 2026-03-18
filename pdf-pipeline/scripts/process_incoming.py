@@ -74,8 +74,14 @@ def write_outbox(doc_id: str, base_url: str):
 
 
 def move_to_processed(pdf_path: Path, ok: bool):
+    # Per retention policy, delete source PDF after successful ingestion/parse.
+    if ok:
+        pdf_path.unlink(missing_ok=True)
+        return
+
+    # Keep failed inputs for troubleshooting.
     PROCESSED.mkdir(parents=True, exist_ok=True)
-    suffix = ".ok" if ok else ".error"
+    suffix = ".error"
     target = PROCESSED / f"{pdf_path.stem}-{int(time.time())}{suffix}{pdf_path.suffix.lower()}"
     shutil.move(str(pdf_path), str(target))
 
