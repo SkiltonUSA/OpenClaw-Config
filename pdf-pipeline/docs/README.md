@@ -89,9 +89,38 @@ This scans `pdf-pipeline/storage/docs/*/manifest.json` and regenerates:
 
 ## Hosting options
 
+See detailed setup in `docs/HOSTING.md`.
+
 - Nginx static path (recommended)
 - Caddy static site
 - Any static file host behind Tailscale/VPN
+
+## Incoming folder automation (phase 3)
+
+Drop PDFs into:
+
+- `pdf-pipeline/incoming/`
+
+Run once:
+
+```bash
+python3 pdf-pipeline/scripts/process_incoming.py \
+  --uploaded-by "discord:dom_ds" \
+  --source-channel "1483854530042134658" \
+  --tags "research" \
+  --base-url "https://YOUR-HOST/pdf-pipeline"
+```
+
+Or watch mode:
+
+```bash
+python3 pdf-pipeline/scripts/process_incoming.py --watch --interval 30
+```
+
+Outputs:
+
+- processed PDFs moved to `pdf-pipeline/processed/`
+- Discord-ready post templates in `pdf-pipeline/outbox/<doc-id>.txt`
 
 ## Discord posting convention
 
