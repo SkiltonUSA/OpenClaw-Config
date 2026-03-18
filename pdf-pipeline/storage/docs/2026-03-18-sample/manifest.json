@@ -1,0 +1,19 @@
+{
+  "docId": "2026-03-18-sample",
+  "title": "Sample Document",
+  "uploadedAt": "2026-03-18T15:50:00Z",
+  "uploadedBy": "discord:dom_ds",
+  "sourceChannel": "1483854530042134658",
+  "tags": ["sample", "pipeline"],
+  "files": {
+    "original": "original.pdf",
+    "markdown": "parsed.md",
+    "json": "parsed.json",
+    "summary": "summary.md"
+  },
+  "parser": {
+    "name": "opendataloader-pdf",
+    "mode": "hybrid",
+    "version": "TBD"
+  }
+}
