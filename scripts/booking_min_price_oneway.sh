@@ -4,9 +4,13 @@ set -euo pipefail
 # Usage: booking_min_price_oneway.sh <DEPART_IATA> <ARRIVAL_IATA>
 # Example: booking_min_price_oneway.sh JFK LOS
 
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# shellcheck disable=SC1091
+source "$ROOT_DIR/scripts/load_travel_env.sh"
+
 if [[ ${1:-} == "-h" || ${1:-} == "--help" ]]; then
   echo "Usage: $(basename "$0") <DEPART_IATA> <ARRIVAL_IATA>"
-  echo "Env vars: RAPIDAPI_KEY (required), RAPIDAPI_HOST (optional; default booking-com18.p.rapidapi.com)"
+  echo "Env vars: RAPIDAPI_KEY (required), BOOKING_RAPIDAPI_HOST (optional; default booking-com18.p.rapidapi.com)"
   exit 0
 fi
 
@@ -25,7 +29,7 @@ if [[ -z "${RAPIDAPI_KEY:-}" ]]; then
   exit 1
 fi
 
-RAPIDAPI_HOST="${RAPIDAPI_HOST:-booking-com18.p.rapidapi.com}"
+RAPIDAPI_HOST="${BOOKING_RAPIDAPI_HOST:-booking-com18.p.rapidapi.com}"
 URL="https://${RAPIDAPI_HOST}/flights/v2/min-price-oneway?departId=${DEPART_ID}&arrivalId=${ARRIVAL_ID}"
 
 curl --silent --show-error --fail \

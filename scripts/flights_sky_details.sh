@@ -5,9 +5,13 @@ set -euo pipefail
 # Example:
 # flights_sky_details.sh "https://flights-sky.p.rapidapi.com/web/flights/details?itineraryId=...&adults=1"
 
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# shellcheck disable=SC1091
+source "$ROOT_DIR/scripts/load_travel_env.sh"
+
 if [[ ${1:-} == "-h" || ${1:-} == "--help" ]]; then
   echo "Usage: $(basename "$0") \"<FULL_URL_WITH_QUERY_PARAMS>\""
-  echo "Env vars: RAPIDAPI_KEY (required), RAPIDAPI_HOST (optional; default flights-sky.p.rapidapi.com)"
+  echo "Env vars: RAPIDAPI_KEY (required), FLIGHTS_SKY_RAPIDAPI_HOST (optional; default flights-sky.p.rapidapi.com)"
   exit 0
 fi
 
@@ -24,7 +28,7 @@ if [[ -z "${RAPIDAPI_KEY:-}" ]]; then
   exit 1
 fi
 
-RAPIDAPI_HOST="${RAPIDAPI_HOST:-flights-sky.p.rapidapi.com}"
+RAPIDAPI_HOST="${FLIGHTS_SKY_RAPIDAPI_HOST:-flights-sky.p.rapidapi.com}"
 
 curl --silent --show-error --fail \
   --request GET \
