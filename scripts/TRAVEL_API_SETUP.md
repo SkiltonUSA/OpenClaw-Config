@@ -20,6 +20,7 @@ scripts/booking_min_price_oneway.sh JFK LOS
 scripts/flights_sky_details.sh "https://flights-sky.p.rapidapi.com/web/flights/details?..."
 scripts/travel_api_assist.sh min-price-summary JFK LOS
 scripts/travel_api_assist.sh details-summary "https://flights-sky.p.rapidapi.com/web/flights/details?..."
+scripts/weather_yahoo_forecast.sh "Washington,DC" f
 ```
 
 ## Security
