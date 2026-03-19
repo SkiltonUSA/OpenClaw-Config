@@ -28,6 +28,14 @@
   - Presence is a best-effort in-memory view of gateway + connected clients/nodes; stable `instanceId` is required to avoid duplicate presence rows.
   - User rule: before modifying `~/.openclaw/openclaw.json`, always create a backup first using suffix convention `openclaw.json-bak-<name><DDMMYYYY>` (example: `openclaw.json-bak-hal03082026`, using DSK-style date convention).
 
+## 2026-03-19
+
+- Confirmed Skylight integration pattern in this workspace/runtime:
+  - Direct API access works reliably when `env.vars` includes `SKYLIGHT_URL`, `SKYLIGHT_EMAIL`, `SKYLIGHT_PASSWORD`, and `SKYLIGHT_FRAME_ID`.
+  - After adding these via OpenClaw `config.patch`, gateway restart is required for runtime availability.
+  - Browser Relay is not required for Skylight when API env vars are configured.
+  - In Discord, generic prompts may still fall back to Browser Relay messaging; explicitly instructing API/env-var usage resolves it.
+
 ## 2026-03-09
 
 - User completed OpenClaw npm upgrade and restart; instructed me to run post-upgrade check with `openclaw doctor --non-interactive`.
