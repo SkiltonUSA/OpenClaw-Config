@@ -21,6 +21,7 @@ scripts/flights_sky_details.sh "https://flights-sky.p.rapidapi.com/web/flights/d
 scripts/travel_api_assist.sh min-price-summary JFK LOS
 scripts/travel_api_assist.sh details-summary "https://flights-sky.p.rapidapi.com/web/flights/details?..."
 scripts/weather_yahoo_forecast.sh "Washington,DC" f
+scripts/airbnb_search_placeid.sh ChIJ7cv00DwsDogRAMDACa2m4K8 2 USD
 ```
 
 ## Security
