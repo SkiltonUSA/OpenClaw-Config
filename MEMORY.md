@@ -48,3 +48,13 @@
   - intermediate failures: invalid authentication credentials / invalid `x-api-key`
   - after user fixed key/account issue, test succeeded and returned `4` on Anthropic Sonnet 4.6.
 - Important safety note reinforced: API keys were pasted in chat during setup; treat as exposed and rotate after successful configuration.
+
+## 2026-03-20
+
+- Added model failover for main defaults to reduce impact of OpenAI Codex OAuth refresh outages:
+  - `agents.defaults.model.primary`: `openai-codex/gpt-5.3-codex`
+  - `agents.defaults.model.fallbacks`: `anthropic/claude-sonnet-4-6`, `gemini_api/gemini-2.5-pro`
+- Established operational response pattern for codex OAuth failures:
+  - Discord alert target: channel `1481012976688431224`
+  - Re-auth sequence: `openclaw configure --section model` → browser OAuth for `openai-codex` → `openclaw doctor --non-interactive`
+- Added heartbeat-driven OAuth failure detector instructions to `HEARTBEAT.md` with de-dup state file `memory/oauth-monitor-state.json`.
