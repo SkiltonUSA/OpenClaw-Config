@@ -22,15 +22,15 @@ def row_for_manifest(m: dict):
     title = m.get("title", doc_id)
     uploaded_at = m.get("uploadedAt", "")
     uploaded_by = m.get("uploadedBy", "")
-    tags = ", ".join(m.get("tags", []))
+    tags = m.get("tags", [])
     files = m.get("files", {})
 
     base = f"docs/{escape(doc_id)}/"
 
     def lnk(name, label):
         if not name:
-            return "-"
-        return f'<a href="{base}{escape(name)}">{escape(label)}</a>'
+            return ""
+        return f'<a class="chip" href="{base}{escape(name)}" target="_blank" rel="noopener">{escape(label)}</a>'
 
     return {
         "docId": doc_id,
@@ -38,10 +38,12 @@ def row_for_manifest(m: dict):
         "uploadedAt": uploaded_at,
         "uploadedBy": uploaded_by,
         "tags": tags,
-        "original": lnk(files.get("original"), "original.pdf"),
-        "markdown": lnk(files.get("markdown"), "parsed.md"),
-        "json": lnk(files.get("json"), "parsed.json"),
-        "summary": lnk(files.get("summary"), "summary.md"),
+        "tagsText": ", ".join(tags),
+        "original": lnk(files.get("original"), "original"),
+        "markdown": lnk(files.get("markdown"), "markdown"),
+        "json": lnk(files.get("json"), "json"),
+        "summary": lnk(files.get("summary"), "summary"),
+        "docUrl": f"docs/{escape(doc_id)}/",
     }
 
 
@@ -54,68 +56,121 @@ def main():
             manifests.append(row_for_manifest(m))
 
     manifests.sort(key=lambda x: x.get("uploadedAt", ""), reverse=True)
-
     generated = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
 
-    rows = []
+    cards = []
     for r in manifests:
-        rows.append(
-            "<tr>"
-            f"<td>{escape(r['docId'])}</td>"
-            f"<td>{escape(r['title'])}</td>"
-            f"<td>{escape(r['uploadedAt'])}</td>"
-            f"<td>{escape(r['uploadedBy'])}</td>"
-            f"<td>{escape(r['tags'])}</td>"
-            f"<td>{r['original']}</td>"
-            f"<td>{r['markdown']}</td>"
-            f"<td>{r['json']}</td>"
-            f"<td>{r['summary']}</td>"
-            "</tr>"
+        tag_html = "".join([f'<span class="tag">{escape(t)}</span>' for t in r["tags"]])
+        file_links = " ".join([x for x in [r["original"], r["markdown"], r["json"], r["summary"]] if x]) or "<span class='muted'>no files</span>"
+        cards.append(
+            f"""
+<article class="card" data-doc-id="{escape(r['docId'])}" data-search="{escape((r['docId'] + ' ' + r['title'] + ' ' + r['uploadedBy'] + ' ' + r['tagsText']).lower())}">
+  <div class="card-head">
+    <div>
+      <h3>{escape(r['title'])}</h3>
+      <p class="docid">DOC:{escape(r['docId'])}</p>
+    </div>
+    <button class="danger" onclick="deleteDoc('{escape(r['docId'])}')">Delete</button>
+  </div>
+  <div class="meta-grid">
+    <div><span>Uploaded</span><strong>{escape(r['uploadedAt'])}</strong></div>
+    <div><span>By</span><strong>{escape(r['uploadedBy']) or '-'}</strong></div>
+    <div><span>Folder</span><strong><a href="{r['docUrl']}" target="_blank" rel="noopener">open</a></strong></div>
+  </div>
+  <div class="tags">{tag_html or '<span class="muted">no tags</span>'}</div>
+  <div class="files">{file_links}</div>
+</article>
+"""
         )
 
-    table_rows = "\n".join(rows) if rows else (
-        "<tr><td colspan='9'><em>No documents indexed yet.</em></td></tr>"
-    )
+    cards_html = "\n".join(cards) if cards else "<div class='empty'>No documents indexed yet.</div>"
 
     html = f"""<!doctype html>
-<html lang=\"en\">
+<html lang="en">
 <head>
-  <meta charset=\"utf-8\" />
-  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />
-  <title>PDF Pipeline Index</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Document Library</title>
   <style>
-    body {{ font-family: Arial, sans-serif; margin: 24px; }}
-    h1 {{ margin-bottom: 8px; }}
-    .meta {{ color: #555; margin-bottom: 16px; }}
-    table {{ border-collapse: collapse; width: 100%; }}
-    th, td {{ border: 1px solid #ddd; padding: 8px; text-align: left; vertical-align: top; }}
-    th {{ background: #f5f5f5; }}
-    tr:nth-child(even) {{ background: #fafafa; }}
-    a {{ text-decoration: none; }}
-    a:hover {{ text-decoration: underline; }}
+    :root {{ --bg:#0d1117; --panel:#161b22; --muted:#8b949e; --text:#e6edf3; --line:#30363d; --accent:#58a6ff; --danger:#f85149; }}
+    * {{ box-sizing: border-box; }}
+    body {{ margin:0; font-family: Inter, system-ui, Arial, sans-serif; background:var(--bg); color:var(--text); }}
+    .wrap {{ max-width:1100px; margin:0 auto; padding:24px; }}
+    .top {{ display:flex; justify-content:space-between; gap:12px; align-items:center; flex-wrap:wrap; }}
+    h1 {{ margin:0; font-size:1.5rem; }}
+    .muted {{ color:var(--muted); }}
+    .meta {{ font-size:.9rem; color:var(--muted); }}
+    .search {{ width:100%; margin-top:14px; background:var(--panel); border:1px solid var(--line); color:var(--text); border-radius:10px; padding:12px 14px; }}
+    .grid {{ display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:14px; margin-top:18px; }}
+    .card {{ background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:14px; }}
+    .card-head {{ display:flex; justify-content:space-between; gap:10px; align-items:flex-start; }}
+    h3 {{ margin:0 0 2px; font-size:1rem; }}
+    .docid {{ margin:0; font-size:.84rem; color:var(--muted); }}
+    .meta-grid {{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin:12px 0; }}
+    .meta-grid span {{ display:block; color:var(--muted); font-size:.74rem; }}
+    .meta-grid strong {{ font-size:.85rem; }}
+    .tags {{ display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; min-height:24px; }}
+    .tag {{ background:#1f2937; border:1px solid var(--line); border-radius:999px; padding:3px 9px; font-size:.75rem; }}
+    .files {{ display:flex; flex-wrap:wrap; gap:8px; }}
+    .chip {{ text-decoration:none; color:var(--accent); border:1px solid var(--line); border-radius:999px; padding:4px 10px; font-size:.78rem; }}
+    .chip:hover {{ border-color:var(--accent); }}
+    .danger {{ background:transparent; border:1px solid var(--danger); color:var(--danger); border-radius:8px; padding:6px 10px; cursor:pointer; font-size:.78rem; }}
+    .danger:hover {{ background:rgba(248,81,73,.12); }}
+    .empty {{ margin-top:16px; padding:20px; border:1px dashed var(--line); border-radius:12px; color:var(--muted); }}
+    .status {{ margin-top:10px; font-size:.9rem; min-height:20px; }}
   </style>
 </head>
 <body>
-  <h1>PDF Pipeline Index</h1>
-  <div class=\"meta\">Generated: {escape(generated)}</div>
-  <table>
-    <thead>
-      <tr>
-        <th>Doc ID</th>
-        <th>Title</th>
-        <th>Uploaded</th>
-        <th>By</th>
-        <th>Tags</th>
-        <th>Original</th>
-        <th>Markdown</th>
-        <th>JSON</th>
-        <th>Summary</th>
-      </tr>
-    </thead>
-    <tbody>
-      {table_rows}
-    </tbody>
-  </table>
+  <div class="wrap">
+    <div class="top">
+      <div>
+        <h1>📚 Document Library</h1>
+        <div class="meta">Generated: {escape(generated)}</div>
+      </div>
+      <div class="meta">Shared index for PDF + non-PDF pipelines</div>
+    </div>
+
+    <input id="search" class="search" type="search" placeholder="Search by title, doc id, uploader, tags..." oninput="filterCards()" />
+    <div id="status" class="status muted"></div>
+
+    <section id="grid" class="grid">
+      {cards_html}
+    </section>
+  </div>
+
+<script>
+function filterCards() {{
+  const q = document.getElementById('search').value.trim().toLowerCase();
+  const cards = [...document.querySelectorAll('.card')];
+  let shown = 0;
+  cards.forEach(c => {{
+    const s = c.dataset.search || '';
+    const ok = !q || s.includes(q);
+    c.style.display = ok ? '' : 'none';
+    if (ok) shown++;
+  }});
+  document.getElementById('status').textContent = `Showing ${{shown}} document(s)`;
+}}
+
+async function deleteDoc(docId) {{
+  if (!confirm(`Delete document ${{docId}}? This removes it from server storage.`)) return;
+  const status = document.getElementById('status');
+  status.textContent = `Deleting ${{docId}}...`;
+  try {{
+    const res = await fetch(`/api/docs/${{encodeURIComponent(docId)}}/delete`, {{ method: 'POST' }});
+    const data = await res.json();
+    if (!res.ok || !data.ok) throw new Error(data.error || 'Delete failed');
+    const card = document.querySelector(`.card[data-doc-id="${{CSS.escape(docId)}}"]`);
+    if (card) card.remove();
+    status.textContent = `Deleted ${{docId}}`;
+    filterCards();
+  }} catch (e) {{
+    status.textContent = `Delete failed: ${{e.message}}`;
+  }}
+}}
+
+filterCards();
+</script>
 </body>
 </html>
 """

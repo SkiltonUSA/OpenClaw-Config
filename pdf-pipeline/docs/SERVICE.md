@@ -17,13 +17,14 @@ systemctl --user start pdf-pipeline-watcher.service
 journalctl --user -u pdf-pipeline-watcher.service -n 100 --no-pager
 ```
 
-## 2) Static library hosting service
+## 2) Library UI hosting service
 
-A static file server is installed to host the clickable library index:
+A library server is installed to host the clickable index and delete API:
 
 - Unit: `~/.config/systemd/user/pdf-pipeline-static.service`
-- Serving root: `/home/ubuntu/.openclaw/workspace`
+- Script: `pdf-pipeline/scripts/library_server.py`
 - Library URL: `http://127.0.0.1:8088/pdf-pipeline/storage/index.html`
+- Delete endpoint: `POST /api/docs/<doc-id>/delete`
 
 Common commands:
 

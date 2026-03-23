@@ -41,7 +41,23 @@ Library URL:
 }
 ```
 
-## 3) Quick local test (no daemon)
+## 3) Built-in library server (recommended for delete UI)
+
+Use the bundled server that supports both static files and delete API:
+
+```bash
+python3 /home/ubuntu/.openclaw/workspace/pdf-pipeline/scripts/library_server.py
+```
+
+Open:
+
+- `http://<host>:8088/pdf-pipeline/storage/index.html`
+
+Delete endpoint (used by UI):
+
+- `POST /api/docs/<doc-id>/delete`
+
+## 4) Quick local static test (read-only)
 
 ```bash
 cd /home/ubuntu/.openclaw/workspace/pdf-pipeline/storage
