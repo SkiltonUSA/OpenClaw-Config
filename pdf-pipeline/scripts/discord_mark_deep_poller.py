@@ -9,7 +9,7 @@ from pathlib import Path
 from urllib.request import Request, urlopen
 
 STATE_FILE = Path('/home/ubuntu/.openclaw/workspace/pdf-pipeline/.mark-deep-state.json')
-RUNNER = Path('/home/ubuntu/.openclaw/workspace/tools/local-deep-researcher/run_and_store.py')
+RUNNER = Path('/home/ubuntu/.openclaw/workspace/pdf-pipeline/scripts/mark_deep_run_and_store.py')
 
 TOKEN = os.getenv('DISCORD_BOT_TOKEN', '').strip()
 CHANNEL_ID = os.getenv('MARK_DEEP_CHANNEL_ID', '').strip()
