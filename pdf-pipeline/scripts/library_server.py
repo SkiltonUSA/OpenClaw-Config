@@ -8,10 +8,12 @@ import subprocess
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
 from urllib.parse import unquote
+from datetime import datetime, timezone
 
 ROOT = Path('/home/ubuntu/.openclaw/workspace/pdf-pipeline/storage').resolve()
 DOCS_DIR = (ROOT / 'docs').resolve()
 REBUILD = Path('/home/ubuntu/.openclaw/workspace/pdf-pipeline/scripts/rebuild_index.py').resolve()
+DELETE_LOG = Path('/home/ubuntu/.openclaw/workspace/pdf-pipeline/storage/deletions.jsonl').resolve()
 PREFIX = '/pdf-pipeline/storage'
 
 
@@ -41,6 +43,16 @@ class Handler(SimpleHTTPRequestHandler):
             self.send_header('Location', f'{PREFIX}/index.html')
             self.end_headers()
             return
+        if self.path.startswith('/api/deletions'):
+            lines = []
+            if DELETE_LOG.exists():
+                for line in DELETE_LOG.read_text(encoding='utf-8').splitlines()[-200:]:
+                    try:
+                        lines.append(json.loads(line))
+                    except Exception:
+                        pass
+            self._json(200, {'ok': True, 'items': list(reversed(lines))})
+            return
         return super().do_GET()
 
     def _json(self, code: int, payload: dict):
@@ -64,6 +76,17 @@ class Handler(SimpleHTTPRequestHandler):
         import shutil
         shutil.rmtree(target)
         subprocess.run(['python3', str(REBUILD)], check=False)
+
+        DELETE_LOG.parent.mkdir(parents=True, exist_ok=True)
+        entry = {
+            'docId': doc_id,
+            'deletedAt': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
+            'client': self.client_address[0],
+            'path': self.path,
+        }
+        with DELETE_LOG.open('a', encoding='utf-8') as f:
+            f.write(json.dumps(entry) + '\n')
+
         self._json(200, {'ok': True, 'docId': doc_id})
 
     def do_POST(self):

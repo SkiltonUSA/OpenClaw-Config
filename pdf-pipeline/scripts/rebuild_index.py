@@ -118,6 +118,10 @@ def main():
     .danger:hover {{ background:rgba(248,81,73,.12); }}
     .empty {{ margin-top:16px; padding:20px; border:1px dashed var(--line); border-radius:12px; color:var(--muted); }}
     .status {{ margin-top:10px; font-size:.9rem; min-height:20px; }}
+    .logbox {{ margin-top:18px; background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:12px; }}
+    .logbox h2 {{ margin:0 0 10px; font-size:1rem; }}
+    .logitem {{ display:flex; justify-content:space-between; gap:10px; padding:8px 0; border-top:1px solid #222831; font-size:.85rem; }}
+    .logitem:first-child {{ border-top:0; }}
   </style>
 </head>
 <body>
@@ -135,6 +139,11 @@ def main():
 
     <section id="grid" class="grid">
       {cards_html}
+    </section>
+
+    <section class="logbox">
+      <h2>🗑️ Deletion Log</h2>
+      <div id="deletions" class="muted">Loading…</div>
     </section>
   </div>
 
@@ -169,7 +178,24 @@ async function deleteDoc(docId) {{
   }}
 }}
 
+async function loadDeletions() {{
+  const box = document.getElementById('deletions');
+  try {{
+    const res = await fetch('/api/deletions');
+    const data = await res.json();
+    if (!data.ok) throw new Error('failed');
+    const items = data.items || [];
+    if (!items.length) {{ box.innerHTML = '<span class="muted">No deletions logged yet.</span>'; return; }}
+    box.innerHTML = items.slice(0,20).map(i =>
+      '<div class="logitem"><span><strong>' + i.docId + '</strong></span><span class="muted">' + i.deletedAt + '</span></div>'
+    ).join('');
+  }} catch (e) {{
+    box.textContent = 'Could not load deletion log.';
+  }}
+}}
+
 filterCards();
+loadDeletions();
 </script>
 </body>
 </html>
