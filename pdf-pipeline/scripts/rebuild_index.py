@@ -100,6 +100,9 @@ def main():
     h1 {{ margin:0; font-size:1.5rem; }}
     .muted {{ color:var(--muted); }}
     .meta {{ font-size:.9rem; color:var(--muted); }}
+    .quick-links {{ display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }}
+    .quick-link {{ text-decoration:none; color:var(--text); border:1px solid var(--line); padding:8px 12px; border-radius:10px; background:var(--panel); font-size:.85rem; }}
+    .quick-link:hover {{ border-color:var(--accent); color:var(--accent); }}
     .search {{ width:100%; margin-top:14px; background:var(--panel); border:1px solid var(--line); color:var(--text); border-radius:10px; padding:12px 14px; }}
     .grid {{ display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:14px; margin-top:18px; }}
     .card {{ background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:14px; }}
@@ -131,7 +134,10 @@ def main():
         <h1>📚 Document Library</h1>
         <div class="meta">Generated: {escape(generated)}</div>
       </div>
-      <div class="meta">Shared index for PDF + non-PDF pipelines</div>
+      <div class="quick-links">
+        <a class="quick-link" href="/pdf-pipeline/storage/ops-dashboard.html" target="_blank" rel="noopener">Open Ops Dashboard</a>
+        <a class="quick-link" href="https://ip-172-31-94-56.taildc9b68.ts.net:8090/" target="_blank" rel="noopener">Open Star Office (8090)</a>
+      </div>
     </div>
 
     <input id="search" class="search" type="search" placeholder="Search by title, doc id, uploader, tags..." oninput="filterCards()" />

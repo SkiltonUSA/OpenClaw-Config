@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>HAL Ops Dashboard</title>
+  <style>
+    :root { --bg:#0d1117; --panel:#161b22; --muted:#8b949e; --text:#e6edf3; --line:#30363d; --ok:#238636; --bad:#f85149; --warn:#d29922; --accent:#58a6ff; }
+    body { margin:0; background:var(--bg); color:var(--text); font-family:Inter,system-ui,Arial,sans-serif; }
+    .wrap { max-width:1100px; margin:0 auto; padding:24px; }
+    .top { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; }
+    h1 { margin:0; font-size:1.5rem; }
+    .muted { color:var(--muted); }
+    .link { text-decoration:none; color:var(--text); border:1px solid var(--line); border-radius:10px; padding:8px 12px; }
+    .link:hover { color:var(--accent); border-color:var(--accent); }
+    .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; margin-top:16px; }
+    .card { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:12px; }
+    .k { color:var(--muted); font-size:.8rem; }
+    .v { font-size:1.4rem; font-weight:600; margin-top:4px; }
+    table { width:100%; border-collapse:collapse; margin-top:14px; background:var(--panel); border:1px solid var(--line); border-radius:12px; overflow:hidden; }
+    th, td { padding:10px; border-bottom:1px solid #222831; text-align:left; font-size:.9rem; }
+    th { color:var(--muted); font-weight:600; }
+    tr:last-child td { border-bottom:0; }
+    .pill { display:inline-block; padding:2px 9px; border-radius:999px; font-size:.75rem; border:1px solid var(--line); }
+    .active { color:#3fb950; border-color:#2ea043; }
+    .inactive, .failed { color:var(--bad); border-color:var(--bad); }
+    .unknown { color:var(--warn); border-color:var(--warn); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div>
+        <h1>🧭 HAL Ops Dashboard</h1>
+        <div id="stamp" class="muted">Loading…</div>
+      </div>
+      <a class="link" href="/pdf-pipeline/storage/index.html">📚 Document Library</a>
+    </div>
+
+    <section class="grid">
+      <div class="card"><div class="k">Documents Indexed</div><div id="docs" class="v">-</div></div>
+      <div class="card"><div class="k">Deletion Events (all time)</div><div id="dels" class="v">-</div></div>
+      <div class="card"><div class="k">Services Healthy</div><div id="ok" class="v">-</div></div>
+    </section>
+
+    <h3>Service Status</h3>
+    <table>
+      <thead><tr><th>Service</th><th>Status</th></tr></thead>
+      <tbody id="svc"></tbody>
+    </table>
+
+    <h3>Recent Deletions</h3>
+    <table>
+      <thead><tr><th>Doc ID</th><th>Deleted At (UTC)</th></tr></thead>
+      <tbody id="delrows"></tbody>
+    </table>
+  </div>
+
+<script>
+async function load() {
+  const res = await fetch('/api/ops/summary');
+  const data = await res.json();
+  if (!data.ok) throw new Error('summary failed');
+
+  document.getElementById('stamp').textContent = `Updated: ${data.generatedAt}`;
+  document.getElementById('docs').textContent = data.docsCount;
+  document.getElementById('dels').textContent = data.deletionsCount;
+
+  const healthy = (data.services || []).filter(s => s.status === 'active').length;
+  document.getElementById('ok').textContent = `${healthy}/${(data.services || []).length}`;
+
+  const svc = document.getElementById('svc');
+  svc.innerHTML = (data.services || []).map(s => {
+    const cls = ['active','inactive','failed'].includes(s.status) ? s.status : 'unknown';
+    return `<tr><td>${s.name}</td><td><span class="pill ${cls}">${s.status}</span></td></tr>`;
+  }).join('');
+
+  const delrows = document.getElementById('delrows');
+  const dels = data.recentDeletions || [];
+  delrows.innerHTML = dels.length ? dels.map(d => `<tr><td>${d.docId}</td><td>${d.deletedAt}</td></tr>`).join('') : '<tr><td colspan="2" class="muted">No deletions yet.</td></tr>';
+}
+
+load().catch(err => {
+  document.getElementById('stamp').textContent = `Error: ${err.message}`;
+});
+</script>
+</body>
+</html>

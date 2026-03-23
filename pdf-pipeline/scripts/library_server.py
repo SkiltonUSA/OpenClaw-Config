@@ -10,6 +10,16 @@ from pathlib import Path
 from urllib.parse import unquote
 from datetime import datetime, timezone
 
+MONITORED_SERVICES = [
+    'openclaw-gateway.service',
+    'pdf-pipeline-watcher.service',
+    'pdf-intake-poller.service',
+    'pdf-nonpdf-watcher.service',
+    'pdf-nonpdf-intake-poller.service',
+    'mark-deep-research-poller.service',
+    'pdf-pipeline-static.service',
+]
+
 ROOT = Path('/home/ubuntu/.openclaw/workspace/pdf-pipeline/storage').resolve()
 DOCS_DIR = (ROOT / 'docs').resolve()
 REBUILD = Path('/home/ubuntu/.openclaw/workspace/pdf-pipeline/scripts/rebuild_index.py').resolve()
@@ -19,6 +29,22 @@ PREFIX = '/pdf-pipeline/storage'
 
 def safe_doc_id(doc_id: str) -> bool:
     return bool(re.fullmatch(r'[a-zA-Z0-9._-]+', doc_id))
+
+
+def read_deletions(limit: int = 200):
+    lines = []
+    if DELETE_LOG.exists():
+        for line in DELETE_LOG.read_text(encoding='utf-8').splitlines()[-limit:]:
+            try:
+                lines.append(json.loads(line))
+            except Exception:
+                pass
+    return list(reversed(lines))
+
+
+def get_service_status(name: str) -> str:
+    p = subprocess.run(['systemctl', '--user', 'is-active', name], capture_output=True, text=True)
+    return (p.stdout or p.stderr).strip() or 'unknown'
 
 
 class Handler(SimpleHTTPRequestHandler):
@@ -43,15 +69,28 @@ class Handler(SimpleHTTPRequestHandler):
             self.send_header('Location', f'{PREFIX}/index.html')
             self.end_headers()
             return
+        if self.path in ('/ops', '/ops-dashboard', '/ops-dashboard.html'):
+            self.send_response(302)
+            self.send_header('Location', f'{PREFIX}/ops-dashboard.html')
+            self.end_headers()
+            return
         if self.path.startswith('/api/deletions'):
-            lines = []
-            if DELETE_LOG.exists():
-                for line in DELETE_LOG.read_text(encoding='utf-8').splitlines()[-200:]:
-                    try:
-                        lines.append(json.loads(line))
-                    except Exception:
-                        pass
-            self._json(200, {'ok': True, 'items': list(reversed(lines))})
+            self._json(200, {'ok': True, 'items': read_deletions(200)})
+            return
+        if self.path.startswith('/api/ops/summary'):
+            docs_count = len([p for p in DOCS_DIR.glob('*/manifest.json')])
+            services = [{
+                'name': s,
+                'status': get_service_status(s),
+            } for s in MONITORED_SERVICES]
+            self._json(200, {
+                'ok': True,
+                'generatedAt': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
+                'docsCount': docs_count,
+                'deletionsCount': len(read_deletions(10000)),
+                'recentDeletions': read_deletions(10),
+                'services': services,
+            })
             return
         return super().do_GET()
 
